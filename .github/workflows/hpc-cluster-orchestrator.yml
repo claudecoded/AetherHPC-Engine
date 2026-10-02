@@ -1,0 +1,59 @@
+name: AetherHPC Supreme Cluster Orchestrator
+
+on:
+  workflow_dispatch:
+    inputs:
+      ai_model:
+        description: 'Primary AI Orchestrator Core (gpt-4o, claude-3-5-sonnet, grok-2)'
+        required: true
+        default: 'gpt-4o'
+      job_type:
+        description: 'Advanced HPC Workload Category'
+        required: true
+        default: 'Quantum-Asset-Simulation'
+      matrix_scale:
+        description: 'Hyper-Matrix Dimension Multiplier'
+        required: true
+        default: '5000'
+
+jobs:
+  security-and-sharding:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Initialize Enterprise Environment
+        run: echo "Secure Compute Vault initiated in the cloud root."
+
+  compute-core-nodes:
+    needs: security-and-sharding
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node_id: [0, 1, 2, 3, 4, 5, 6, 7] # 8 Nodes execution vector
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Setup Compute Runtime
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Deploy High-Performance Dependencies
+        run: pip install -r requirements.txt
+      - name: Execute Advanced Multi-Layer Workload
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python core/compute_node.py \
+            --node-id ${{ matrix.node_id }} \
+            --total-nodes 8 \
+            --job-type "${{ github.event.inputs.job_type }}" \
+            --ai-model "${{ github.event.inputs.ai_model }}" \
+            --scale "${{ github.event.inputs.matrix_scale }}"
+      - name: Upload Secure Node Output Shard
+        uses: actions/upload-artifact@v4
+        with:
+          name: secure-shard-${{ matrix.node_id }}
+          path: output/
