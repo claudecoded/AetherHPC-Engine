@@ -17,34 +17,29 @@ on:
         default: '5000'
 
 jobs:
-  security-and-sharding:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      - name: Initialize Enterprise Environment
-        run: echo "Secure Compute Vault initiated in the cloud root."
-
   compute-core-nodes:
-    needs: security-and-sharding
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        node_id: [0, 1, 2, 3, 4, 5, 6, 7] # 8 Nodes execution vector
+        node_id: [0, 1, 2, 3, 4, 5, 6, 7] # 8 Nodes executing simultaneously
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
       - name: Setup Compute Runtime
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
       - name: Deploy High-Performance Dependencies
         run: pip install -r requirements.txt
+
       - name: Execute Advanced Multi-Layer Workload
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         run: |
           python core/compute_node.py \
             --node-id ${{ matrix.node_id }} \
@@ -52,8 +47,35 @@ jobs:
             --job-type "${{ github.event.inputs.job_type }}" \
             --ai-model "${{ github.event.inputs.ai_model }}" \
             --scale "${{ github.event.inputs.matrix_scale }}"
+
       - name: Upload Secure Node Output Shard
         uses: actions/upload-artifact@v4
         with:
           name: secure-shard-${{ matrix.node_id }}
           path: output/
+
+  mainframe-consolidation:
+    needs: compute-core-nodes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Download All Node Shards
+        uses: actions/download-artifact@v4
+        with:
+          path: all-shards
+
+      - name: Run Master Cryptographic Assembly & AI Validation
+        run: python core/master_consolidator.py
+
+      - name: Upload Consolidated Data Dataset
+        uses: actions/upload-artifact@v4
+        with:
+          name: AetherHPC-Consolidated-Output
+          path: mainframe_output/
